@@ -1,5 +1,6 @@
 package com.example.demosecuritydatabase.Configuration;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
@@ -19,19 +20,16 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
+    @Autowired
+    private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    @Autowired
+    private JwtRequestFilter jwtRequestFilter;
+    @Autowired
+    private UserDetailsService jwtService;
 
-    final private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
-    final private JwtRequestFilter jwtRequestFilter;
-    final private UserDetailsService jwtService;
-
-    public WebSecurityConfiguration(JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
-                                    JwtRequestFilter jwtRequestFilter, UserDetailsService jwtService) {
-        this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
-        this.jwtRequestFilter = jwtRequestFilter;
-        this.jwtService = jwtService;
-    }
 
     @Override
+    @Bean
     public AuthenticationManager authenticationManagerBean() throws Exception {
         return super.authenticationManagerBean();
     }
@@ -41,7 +39,7 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
         http.cors();
         http
                 .csrf().disable()
-                .authorizeRequests().antMatchers("").permitAll()
+                .authorizeRequests().antMatchers("/authenticate","/registerNewUser").permitAll()
                 .antMatchers(HttpHeaders.ALLOW).permitAll()
                 .anyRequest().authenticated()
                 .and()
@@ -56,7 +54,8 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
         return new BCryptPasswordEncoder();
     }
 
-    public void configureGlobal(AuthenticationManagerBuilder authenticationManagerBuilder) {
+    @Autowired
+    public void configureGlobal(AuthenticationManagerBuilder authenticationManagerBuilder) throws Exception {
         authenticationManagerBuilder.userDetailsService(jwtService).passwordEncoder(passwordEncoder());
     }
 }
